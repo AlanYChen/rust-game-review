@@ -14,13 +14,23 @@ jobs:
       - name: Check out repo code
         uses: actions/checkout@v4
 
+      # Cargo build
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --all-features
+
       - name: Run commands
         run: |
           ls
           pwd
+          mv target/
           mkdir dist
-          
 
+      # Create a zip of everything
       - uses: montudor/action-zip@v1
         with:
           args: zip -qq -r dist/release.zip .

@@ -24,8 +24,8 @@ use std::io::{Read, Write};
 async fn func(event: LambdaEvent<Value>) -> Result<Value, Error> {
     let (event, _context) = event.into_parts();
 
-    println!("event: {event:?}");
-    println!("-----------------");
+    // println!("event: {event:?}");
+    // println!("-----------------");
 
     let body = event["body"].as_str().expect("event needs body field");
     let args: Vec<&str> = body.split("_").collect();
