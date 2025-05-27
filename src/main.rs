@@ -38,14 +38,16 @@ async fn my_lambda_func(_event: LambdaEvent<Value>) -> Result<Value, Error> {
     // let output = String::from_utf8_lossy(&output);
     // println!("{output}");
 
-    let stockfish_path = if cfg!(target_os = "windows") {
+    let on_windows = cfg!(target_os = "windows");
+
+    let stockfish_path = if on_windows {
         "./stockfish-windows.exe"
     } else {
-        "/var/task/stockfish"
+        "/var/task/stockfish-linux"
     };
 
     let mut stockfish;
-    if cfg!(target_os = "windows") {
+    if on_windows {
         stockfish = Command::new(stockfish_path)
             // .args(&["/k", stockfish_path])
             .stdin(Stdio::piped())
