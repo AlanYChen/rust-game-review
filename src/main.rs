@@ -19,7 +19,7 @@ async fn main() -> Result<(), Error> {
 const API_KEY: &'static str = "nfY4b672";
 
 use std::process::{Command, Stdio};
-use std::io::Write;
+use std::io::{Read, Write};
 
 async fn func(event: LambdaEvent<Value>) -> Result<Value, Error> {
     let (event, _context) = event.into_parts();
@@ -44,15 +44,26 @@ async fn func(event: LambdaEvent<Value>) -> Result<Value, Error> {
         .spawn()
         .expect("Failed to spawn stockfish child process");
     let mut stdin = stockfish.stdin.take().expect("Failed to open stdin");
-    
+    let mut stdout = stockfish.stdout.take().expect("failed to open stdout");
+
     stdin.write_all("uci".as_bytes()).expect("Failed to write to stdin");
     stdin.write_all("ucinewgame".as_bytes()).expect("Failed to write to stdin");
 
     println!("write_all calls complete");
-    stdin.flush();
+    stdin.flush().expect("Error when flushing output to stdin");
 
-    let output = stockfish.wait_with_output().expect("Failed to read stdout");
-    let output = String::from_utf8_lossy(&output.stdout);
+    let mut buf = Vec::new();
+    stdout.read_to_end(&mut buf).expect("Couldn't read from stdout");
+    let output = String::from_utf8_lossy(&buf);
+    println!("output = {output}");
+
+    // Input moves
+    stdin.write_all("go depth 15".as_bytes()).expect("Failed to write to stdin");
+    stdin.flush().expect("Error when flushing output to stdin");
+
+    let mut buf = Vec::new();
+    stdout.read_to_end(&mut buf).expect("Couldn't read from stdout");
+    let output = String::from_utf8_lossy(&buf);
     println!("output = {output}");
 
     Ok(json!({ "message": "success" }))
