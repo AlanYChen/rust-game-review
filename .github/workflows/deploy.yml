@@ -1,0 +1,42 @@
+name: Zip & Deploy to S3
+
+# 
+on:
+  push:
+    branches:
+      - main 
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repo code
+        uses: actions/checkout@v4
+
+      - name: Run commands
+        run: |
+          ls
+          pwd
+          mkdir dist
+
+      - uses: montudor/action-zip@v1
+        with:
+          args: zip -qq -r dist/release.zip .
+
+      # I'd just picked a random Github Action I'd found for uploading
+      # to AWS S3. 
+      #
+      # "secrets" refers to certain environment variables.
+      # In the game-review-lambda Github Repository, I went into the repository settings
+      # and created three repository secrets by the name of AWS_KEY_ID, AWS_SECRET_ACCESS_KEY,
+      # and AWS_BUCKET. For the first two secrets, I got their values by creating
+      # an AWS user authorized to do stuff on my S3 buckets, and retrieving access keys
+      # for that user.
+      - uses: shallwefootball/s3-upload-action@master
+        with:
+          aws_key_id: ${{ secrets.AWS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY}}
+          aws_bucket: ${{ secrets.AWS_BUCKET }}
+          source_dir: 'dist'
+          destination_dir: 'workflow_output'
