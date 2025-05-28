@@ -25,7 +25,7 @@ async fn my_lambda_func(event: LambdaEvent<Value>) -> Result<Value, LambdaError>
     run(start_pos, moves)?;
 
     // End
-    std::thread::sleep(std::time::Duration::from_millis(1000));
+    std::thread::sleep(std::time::Duration::from_millis(3000));
     Ok(json!({"message": "success"}))
 }
 
