@@ -5,31 +5,6 @@ use crate::chess_analysis::{get_white_win_percentages, get_move_annotations, get
 
 use serde::{Serialize, Serializer, ser::SerializeSeq};
 
-#[derive(Debug)]
-pub struct GameReview {
-    pub engine_outputs: Vec<EngineOutput>,
-    pub move_annotations: Vec<MoveAnnotation>,
-    pub white_accuracy_score: u32,
-    pub black_accuracy_score: u32,
-}
-// impl fmt::Display for GameReview {
-//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-//         let str = self.engine_outputs.de + " " + &self.value().to_string();
-//         write!(f, "{}", str)
-//     }
-// }
-impl Serialize for GameReview {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
-        // serializer.serialize_str(&self.to_string())
-        let mut seq = serializer.serialize_seq(Some(4))?;
-        seq.serialize_element(&self.engine_outputs)?;
-        seq.serialize_element(&self.move_annotations)?;
-        seq.serialize_element(&self.white_accuracy_score)?;
-        seq.serialize_element(&self.black_accuracy_score)?;
-        seq.end()
-    }
-}
-
 /// Methods
 /// 
 
@@ -50,8 +25,6 @@ pub fn get_game_review(start_pos: String, moves: String) -> std::io::Result<Game
         stockfish.play_move(chess_move)?;
         let engine_output = stockfish.go_to_depth(15)?;
         engine_outputs.push(engine_output);
-
-        stockfish.print_board()?;
     }
 
     let white_win_percentages = get_white_win_percentages(&engine_outputs);
@@ -76,5 +49,30 @@ fn get_stockfish_path() -> &'static str {
         "./stockfish-windows.exe"
     } else {
         "/var/task/stockfish-linux"
+    }
+}
+
+#[derive(Debug)]
+pub struct GameReview {
+    pub engine_outputs: Vec<EngineOutput>,
+    pub move_annotations: Vec<MoveAnnotation>,
+    pub white_accuracy_score: u32,
+    pub black_accuracy_score: u32,
+}
+// impl fmt::Display for GameReview {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         let str = self.engine_outputs.de + " " + &self.value().to_string();
+//         write!(f, "{}", str)
+//     }
+// }
+impl Serialize for GameReview {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
+        // serializer.serialize_str(&self.to_string())
+        let mut seq = serializer.serialize_seq(Some(4))?;
+        seq.serialize_element(&self.engine_outputs)?;
+        seq.serialize_element(&self.move_annotations)?;
+        seq.serialize_element(&self.white_accuracy_score)?;
+        seq.serialize_element(&self.black_accuracy_score)?;
+        seq.end()
     }
 }

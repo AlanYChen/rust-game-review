@@ -55,7 +55,6 @@ impl StockfishProcess {
     }
 
     pub fn send(&mut self, data: &str) -> io::Result<()> {
-        println!("send: {data}");
         self.interactive_process.send(data)?;
         Ok(())
     }
@@ -158,7 +157,6 @@ impl StockfishProcess {
     /* Private Methods */
     fn read_line(&mut self) -> String {
         let line = self.receiver.recv().expect("should be able to read from receiver");
-        println!("read: {line}");
         line
     }
 }
