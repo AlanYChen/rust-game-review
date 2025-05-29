@@ -19,7 +19,7 @@ async fn main() -> Result<(), LambdaError> {
 
 async fn my_lambda_func(event: LambdaEvent<Value>) -> Result<Value, LambdaError> {
     let (start_pos, moves) = parse_event(event).expect("API key should match");
-
+    println!("s, m: {start_pos}, {moves}");
     let game_review = run(start_pos, moves)?;
 
     let json = json!(game_review);

@@ -4,7 +4,6 @@ use crate::stockfish_process::StockfishProcess;
 use crate::chess_analysis::{get_white_win_percentages, get_move_annotations, get_accuracy_scores};
 
 use serde::{Serialize, Serializer, ser::SerializeSeq};
-use std::fmt;
 
 #[derive(Debug)]
 pub struct GameReview {
@@ -51,6 +50,8 @@ pub fn get_game_review(start_pos: String, moves: String) -> std::io::Result<Game
         stockfish.play_move(chess_move)?;
         let engine_output = stockfish.go_to_depth(15)?;
         engine_outputs.push(engine_output);
+
+        stockfish.print_board()?;
     }
 
     let white_win_percentages = get_white_win_percentages(&engine_outputs);
