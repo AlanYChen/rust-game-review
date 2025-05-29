@@ -109,13 +109,13 @@ impl StockfishProcess {
             let previous_segments: Vec<&str> = previous_line.split(" ").collect();
 
             let mut score_type = None;
-            let mut score_value: Option<i8> = None;
+            let mut score_value: Option<i32> = None;
 
             for (i, segment) in previous_segments.iter().enumerate() {
                 if *segment == "score" {
                     score_type = Some(previous_segments[i + 1]);
                     score_value = Some(
-                        previous_segments[i + 2].parse::<i8>().expect("should be able to parse score_value from stockfish info line in output")
+                        previous_segments[i + 2].parse::<i32>().expect("should be able to parse score_value from stockfish info line in output")
                             * color_multiplier);
                     break;
                 }

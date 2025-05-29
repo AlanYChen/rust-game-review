@@ -5,13 +5,10 @@ use crate::chess_analysis::{get_white_win_percentages, get_move_annotations, get
 
 use serde::{Serialize, Serializer, ser::SerializeSeq};
 
-/// Methods
-/// 
-
 pub fn get_game_review(start_pos: String, moves: String) -> std::io::Result<GameReview> {
     let stockfish_path = get_stockfish_path();
     let moves: Vec<&str> = moves.split(" ").collect();
-
+    
     let mut stockfish = StockfishProcess::new(stockfish_path)?;
     stockfish.setup_for_new_game(&start_pos)?;
 

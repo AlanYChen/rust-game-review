@@ -33,17 +33,17 @@ impl Serialize for EvalType {
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct EngineEval {
     eval_type: EvalType,
-    value: i8,
+    value: i32,
 }
 
 impl EngineEval {
-    pub fn new(eval_type: EvalType, value: i8) -> Self {
+    pub fn new(eval_type: EvalType, value: i32) -> Self {
         Self { eval_type: eval_type, value: value }
     }
     pub fn eval_type(&self) -> EvalType {
         self.eval_type
     }
-    pub fn value(&self) -> i8 {
+    pub fn value(&self) -> i32 {
         self.value
     }
 }

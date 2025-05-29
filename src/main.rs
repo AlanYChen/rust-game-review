@@ -2,7 +2,6 @@ use std::env;
 
 use lambda_runtime::{service_fn, LambdaEvent, Error as LambdaError};
 use serde_json::{json, Value};
-use base64::prelude::*;
 
 use rust_game_review_lambda::event_parsing::parse_event;
 use rust_game_review_lambda::run;
@@ -28,12 +27,12 @@ async fn my_lambda_func(event: LambdaEvent<Value>) -> Result<Value, LambdaError>
 
 #[tokio::test]
 async fn test_my_lambda_handler() {
-    // let str = "{\"body\": \"nfY4b672_s_e2e4 e7e5\"}";
+    use base64::prelude::*;
+    const API_KEY: &str = "nfY4b672";
 
-    let api_key = "nfY4b672";
     let starting_position = "s";
-    let moves = "e2e4 e7e5";
-    let body = format!("{}_{}_{}", api_key, starting_position, moves);
+    let moves = "e2e4 e7e5 g1f3";
+    let body = format!("{}_{}_{}", API_KEY, starting_position, moves);
 
     let body = BASE64_STANDARD.encode(body);
 
