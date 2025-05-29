@@ -1,5 +1,3 @@
-// Copy & pasted from https://github.com/awslabs/aws-lambda-rust-runtime
-
 use std::env;
 
 use lambda_runtime::{service_fn, LambdaEvent, Error as LambdaError};
@@ -22,11 +20,11 @@ async fn main() -> Result<(), LambdaError> {
 async fn my_lambda_func(event: LambdaEvent<Value>) -> Result<Value, LambdaError> {
     let (start_pos, moves) = parse_event(event).expect("API key should match");
 
-    run(start_pos, moves)?;
+    let game_review = run(start_pos, moves)?;
 
-    // End
-    std::thread::sleep(std::time::Duration::from_millis(3000));
-    Ok(json!({"message": "success"}))
+    let json = json!(game_review);
+    println!("{json}");
+    Ok(json)
 }
 
 #[tokio::test]

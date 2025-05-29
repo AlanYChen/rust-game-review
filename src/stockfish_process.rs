@@ -1,7 +1,6 @@
-use std::io::Error as IoError;
+use std::io;
 use std::process::Command;
-
-use std::sync::mpsc::{channel, Receiver, RecvError, Sender};
+use std::sync::{mpsc, mpsc::Receiver};
 
 use interactive_process::InteractiveProcess;
 
@@ -14,18 +13,20 @@ pub struct StockfishProcess {
 }
 
 impl StockfishProcess {
-    pub fn new() -> Result<StockfishProcess, IoError> {
-        let mut command = get_stockfish_command()?;
+    pub fn new(stockfish_path: &str) -> io::Result<StockfishProcess> {
+        let mut command = Command::new(stockfish_path);
 
-        let (tx, rx) = channel();
+        let (tx, rx) = mpsc::channel();
 
         let proc = InteractiveProcess::new(&mut command, move |line| {
             let line = line.unwrap();
-            // println!("Read line: {}", line);
-            tx.send(line);
+            let send_result = tx.send(line);
+            if send_result.is_err() {
+                println!("receiving end of mpsc channel disconnected")
+            }
         })?;
 
-        rx.recv().expect("SHould be able to read from rx initially");
+        rx.recv().expect("should be able to read first line from rx");
 
         Ok(StockfishProcess { 
             interactive_process: proc,
@@ -33,79 +34,61 @@ impl StockfishProcess {
         })
     }
 
-    pub fn ensure_ready(&mut self) -> Result<(), IoError> {
-        self.send("isready")?;
-        while self.read_line() != "readyok" {}
-        Ok(())
-    }
-
-    pub fn setup_for_new_game(&mut self, start_pos: &str) -> Result<(), IoError> {
+    pub fn setup_for_new_game(&mut self, start_pos: &str) -> io::Result<()> {
+        self.ensure_ready()?;
         self.send("ucinewgame")?;
 
         if start_pos == "s" {
             self.send("position startpos")?;
         } else {
-            let mut msg = String::from("position fen ");
-            msg.push_str(&start_pos);
+            let msg = String::from("position fen ") + &start_pos;
             self.send(&msg)?;
         }
 
         Ok(())
     }
 
-    pub fn send(&mut self, data: &str) -> Result<(), IoError> {
+    pub fn ensure_ready(&mut self) -> io::Result<()> {
+        self.send("isready")?;
+        while self.read_line() != "readyok" {}
+        Ok(())
+    }
+
+    pub fn send(&mut self, data: &str) -> io::Result<()> {
         self.interactive_process.send(data)?;
         Ok(())
     }
 
-    pub fn get_fen(&mut self) -> Result<String, IoError> {
+    pub fn get_fen(&mut self) -> io::Result<String> {
         self.send("d")?;
-
         loop {
             let line = self.read_line();
-            let segments: Vec<&str> = line.split(" ").collect();
-            if segments[0] == "Fen:" {
-                let result = segments.join(" ");
+            let mut segments= line.split(" ");
+            if segments.next().unwrap() == "Fen:" {
+                let fen = segments.collect::<Vec<&str>>().join(" ");
 
                 // Keep reading lines until reached "Checkers", which is in the last line
                 while !self.read_line().contains("Checkers") {}
 
-                return Ok(result);
+                return Ok(fen);
             }
         }
     }
 
-    pub fn print_board(&mut self) -> Result<(), IoError> {
-        self.send("d")?;
-
-        let mut lines: Vec<String> = Vec::with_capacity(20);
-
-        loop {
-            let line = self.read_line();
-            if line.is_empty() {
-                continue;
-            }
-
-            let first_segment = line.split(" ").next().expect("Non-empty line should have segment");
-            if first_segment == "Fen:" {
-                break
-            } else {
-                lines.push(line);
-            }
-        }
-        let combined = lines.join("\n");
-        println!("{combined}");
+    pub fn play_move(&mut self, move_str: &str) -> io::Result<()> {
+        let fen = self.get_fen()?;
+        let data = format!("position fen {fen} moves {move_str}");
+        self.send(&data)?;
         Ok(())
     }
 
-    pub fn go_to_depth(&mut self, depth: u8) -> Result<EngineOutput, IoError> {
-        let mut message = String::from("go depth ");
-        message.push_str(&depth.to_string());
+    pub fn go_to_depth(&mut self, depth: u8) -> io::Result<EngineOutput> {
+        let message = String::from("go depth ") + &depth.to_string();
         self.send(&message)?;
         self.get_engine_output()
     }
 
-    pub fn get_engine_output(&mut self) -> Result<EngineOutput, IoError> {
+    pub fn get_engine_output(&mut self) -> io::Result<EngineOutput> {
         let fen = self.get_fen()?;
         let color_multiplier = if fen.contains("w") {1} else {-1};
         // Stockfish shows advantage relative to current player. This function will instead
@@ -149,22 +132,31 @@ impl StockfishProcess {
         }
     }
 
+    pub fn print_board(&mut self) -> io::Result<()> {
+        self.send("d")?;
+
+        let mut lines: Vec<String> = Vec::with_capacity(20);
+
+        loop {
+            let line = self.read_line();
+            if line.is_empty() {
+                continue;
+            }
+
+            let first_segment = line.split(" ").next().expect("non-empty line should have segment");
+            if first_segment == "Fen:" {
+                break
+            } else {
+                lines.push(line);
+            }
+        }
+        println!("{}", lines.join("\n"));
+        Ok(())
+    }
+
     /* Private Methods */
     fn read_line(&mut self) -> String {
-        self.receiver.recv().expect("Should be able to read from receiver")
+        let line = self.receiver.recv().expect("should be able to read from receiver");
+        line
     }
-}
-
-/*
- * Accessory Functions
-*/
-fn get_stockfish_command() -> Result<Command, IoError> {
-    let on_windows = cfg!(target_os = "windows");
-    let stockfish_path = if on_windows {
-        "./stockfish-windows.exe"
-    } else {
-        "/var/task/stockfish-linux"
-    };
-
-    Ok(Command::new(stockfish_path))
 }
