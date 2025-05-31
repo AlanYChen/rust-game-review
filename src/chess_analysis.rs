@@ -18,7 +18,7 @@ pub fn get_move_annotations(white_win_percentages: &[f32]) -> Vec<MoveAnnotation
         let is_white = i % 2 == 1;
         let (last_percentage, new_percentage) = percentage_pair(white_win_percentages, i, is_white);
 
-        let loss = new_percentage - last_percentage;
+        let loss = last_percentage - new_percentage;
         annotations.push(MoveAnnotation::from_parameters(loss, new_percentage));
     }
     annotations
