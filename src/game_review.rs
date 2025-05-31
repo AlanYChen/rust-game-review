@@ -1,26 +1,30 @@
-use crate::engine_output::EngineOutput;
 use crate::move_annotation::MoveAnnotation;
-use crate::stockfish_process::StockfishProcess;
 use crate::chess_analysis::{get_white_win_percentages, get_move_annotations, get_accuracy_scores};
 
 use serde::{Serialize, Serializer, ser::SerializeSeq};
+
+use stockfish::{Stockfish, EngineOutput};
 
 pub fn get_game_review(start_pos: String, moves: String) -> std::io::Result<GameReview> {
     let stockfish_path = get_stockfish_path();
     let moves: Vec<&str> = moves.split(" ").collect();
     
-    let mut stockfish = StockfishProcess::new(stockfish_path)?;
-    stockfish.setup_for_new_game(&start_pos)?;
+    let mut stockfish = Stockfish::new(stockfish_path)?;
+    stockfish.setup_for_new_game()?;
+
+    if start_pos != "s" {
+        stockfish.set_fen_position(&start_pos)?;
+    }
 
     let num_positions_to_analyze = moves.len() + 1;
     let mut engine_outputs: Vec<EngineOutput> = Vec::with_capacity(num_positions_to_analyze);
 
-    let engine_output = stockfish.go_to_depth(15)?;
+    let engine_output = stockfish.go()?;
     engine_outputs.push(engine_output);
 
     for chess_move in moves {
         stockfish.play_move(chess_move)?;
-        let engine_output = stockfish.go_to_depth(15)?;
+        let engine_output = stockfish.go()?;
         engine_outputs.push(engine_output);
     }
 
@@ -66,8 +70,21 @@ impl Serialize for GameReview {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
         // serializer.serialize_str(&self.to_string())
         let mut seq = serializer.serialize_seq(Some(4))?;
-        seq.serialize_element(&self.engine_outputs)?;
-        seq.serialize_element(&self.move_annotations)?;
+
+        let engine_outputs: Vec<String> = self.engine_outputs
+            .iter()
+            .map(|output| output.to_string())
+            .collect();
+
+        let move_annotations: Vec<String> = self.move_annotations
+            .iter()
+            .map(|output| output.to_string())
+            .collect();
+
+        seq.serialize_element(&engine_outputs)?;
+
+        seq.serialize_element(&move_annotations)?;
+
         seq.serialize_element(&self.white_accuracy_score)?;
         seq.serialize_element(&self.black_accuracy_score)?;
         seq.end()

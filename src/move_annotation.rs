@@ -1,4 +1,4 @@
-use serde::{Serialize, Serializer};
+use std::fmt;
 
 #[derive(Debug)]
 pub enum MoveAnnotation {
@@ -8,9 +8,8 @@ pub enum MoveAnnotation {
     Mistake,
     Blunder,
 }
-impl Serialize for MoveAnnotation {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where S: Serializer {
+impl fmt::Display for MoveAnnotation {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let annotation_index = match self {
             MoveAnnotation::Excellent => 1,
             MoveAnnotation::Fair => 2,
@@ -18,7 +17,7 @@ impl Serialize for MoveAnnotation {
             MoveAnnotation::Mistake => 4,
             MoveAnnotation::Blunder => 5,
         };
-        serializer.serialize_i32(annotation_index)
+        write!(f, "{annotation_index}")
     }
 }
 

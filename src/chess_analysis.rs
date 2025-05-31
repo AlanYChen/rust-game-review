@@ -1,6 +1,6 @@
+use stockfish::{EngineEval, EvalType, EngineOutput};
+
 use crate::move_annotation::MoveAnnotation;
-use crate::engine_output::EngineOutput;
-use crate::engine_eval::{EngineEval, EvalType};
 
 use std::f32::consts;
 
@@ -15,7 +15,7 @@ pub fn get_white_win_percentages(engine_outputs: &[EngineOutput]) -> Vec<f32> {
 pub fn get_move_annotations(white_win_percentages: &[f32]) -> Vec<MoveAnnotation> {
     let mut annotations = Vec::with_capacity(white_win_percentages.len());
     for i in 1..white_win_percentages.len() {
-        let is_white = i % 2 == 0;
+        let is_white = i % 2 == 1;
         let (last_percentage, new_percentage) = percentage_pair(white_win_percentages, i, is_white);
 
         let loss = new_percentage - last_percentage;
@@ -29,7 +29,7 @@ pub fn get_accuracy_scores(white_win_percentages: &[f32]) -> (u32, u32) {
     let mut black_accuracy_score = 0.0;
 
     for i in 1..white_win_percentages.len() {
-        let is_white = i % 2 == 0;
+        let is_white = i % 2 == 1;
         let (last_percentage, new_percentage) = percentage_pair(white_win_percentages, i, is_white);
 
         let move_accuracy = 103.1668 * consts::E.powf(
@@ -49,7 +49,6 @@ pub fn get_accuracy_scores(white_win_percentages: &[f32]) -> (u32, u32) {
     } else {
         (total_moves / 2 + 1, total_moves / 2)
     };
-    println!("num_white_moves, num_black_moves: {num_white_moves}, {num_black_moves}");
 
     white_accuracy_score /= num_white_moves as f32;
     black_accuracy_score /= num_black_moves as f32;

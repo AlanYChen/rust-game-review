@@ -510,6 +510,7 @@ dependencies = [
  "lambda_runtime",
  "serde",
  "serde_json",
+ "stockfish",
  "tokio",
 ]
 
@@ -599,6 +600,16 @@ checksum = "e22376abed350d73dd1cd119b57ffccad95b4e585a7cda43e286245ce23c0678"
 dependencies = [
  "libc",
  "windows-sys 0.52.0",
+]
+
+[[package]]
+name = "stockfish"
+version = "0.2.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "403eac757c51bdf3fe71091a74e5f5aa44e172cb60d5f123e7b10c8b3aef72c2"
+dependencies = [
+ "interactive_process",
+ "serde",
 ]
 
 [[package]]
